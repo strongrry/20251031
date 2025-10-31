@@ -72,4 +72,4 @@ pipeline {
             echo 'Pipeline 실패!'
         }
     }
-}
+//}
