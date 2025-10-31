@@ -1,4 +1,3 @@
-// ✅ Jenkins Declarative Pipeline (Windows + Node.js 프로젝트용)
 pipeline {
     agent any
 
@@ -35,7 +34,7 @@ pipeline {
             }
         }
 
-        stage('Start') {
+        stage('Build') {
             when {
                 anyOf {
                     branch 'main'
@@ -44,9 +43,9 @@ pipeline {
             }
             steps {
                 bat '''
-                echo === START 단계 시작 ===
+                echo === BUILD 단계 시작 ===
                 SET PATH=C:\\Program Files\\nodejs;%PATH%
-                npm run start
+                npm run build
                 '''
             }
         }
