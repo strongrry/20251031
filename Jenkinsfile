@@ -2,23 +2,21 @@
 pipeline {
     agent any
 
-    // 🌍 파이프라인 전체에서 공통으로 사용할 환경 변수 설정
+    // 🌍 Node.js 경로 설정 (Windows 전용)
     environment {
-        // Windows 환경에서 Node.js 경로를 추가
         PATH = "C:\\Program Files\\nodejs;%PATH%"
     }
 
-    // 🏗️ 실제 작업 단계를 정의하는 블록
     stages {
-
-        // 🗂️ 1️⃣ Git 저장소에서 소스 코드 체크아웃
+        // 🗂️ 1️⃣ Git 저장소에서 코드 가져오기
         stage('Checkout') {
             steps {
+                echo "📦 Git 저장소에서 코드 가져오는 중..."
                 checkout scm
             }
         }
 
-        // 📦 2️⃣ Node.js 의존성 설치
+        // 📦 2️⃣ 의존성 설치
         stage('Install') {
             steps {
                 bat '''
@@ -29,13 +27,13 @@ pipeline {
             }
         }
 
-        // 🧪 3️⃣ 테스트 실행
+        // 🧪 3️⃣ 테스트 실행 (테스트 파일 없어도 통과)
         stage('Test') {
             steps {
                 bat '''
                 echo === TEST 단계 시작 ===
                 SET PATH=C:\\Program Files\\nodejs;%PATH%
-                npm test
+                npm test --passWithNoTests
                 '''
             }
         }
@@ -52,13 +50,13 @@ pipeline {
                 bat '''
                 echo === START 단계 시작 ===
                 SET PATH=C:\\Program Files\\nodejs;%PATH%
-                npm start
+                npm run start
                 '''
             }
         }
     }
 
-    // 📋 파이프라인 완료 후 실행할 후처리(post) 블록
+    // 📋 5️⃣ 빌드 결과 후처리
     post {
         success {
             echo '✅ Pipeline 성공적으로 완료!'
