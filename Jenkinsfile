@@ -1,62 +1,59 @@
-// ✅ Jenkins Declarative Pipeline (Node.js 프로젝트용)
-
 pipeline {
-    // 🧩 Jenkins가 어떤 에이전트(노드)에서 이 파이프라인을 실행할지 지정
-    // "any"는 빌드 가능한 아무 노드에서나 실행 가능함
     agent any
 
-
-    // 🏗️ 실제 작업 단계를 정의하는 블록
     stages {
-
-        // 🗂️ 1️⃣ Git 저장소에서 소스 코드 체크아웃
         stage('Checkout') {
             steps {
-                // Jenkins가 설정된 SCM(Source Control Management)에서 자동으로 코드 가져오기
                 checkout scm
             }
         }
-
-        // 📦 2️⃣ Node.js 의존성 설치
-        stage('Install') {
+        stage('Test') {
             steps {
-                // package.json에 정의된 모든 npm 패키지 설치
-                bat 'npm install'
+                script {
+                    if (isUnix()) {
+                        sh '''
+                            set -e
+                            if ! grep -q "hello" hello.txt; then
+                                echo "실패: hello.txt에 'hello' 문자가 없습니다."
+                                exit 1
+                            fi
+                        '''
+                    } else {
+                        bat '''
+                            findstr /i /c:"hello" hello.txt >nul
+                            if errorlevel 1 (
+                                echo 실패: hello.txt에 'hello' 문자가 없습니다.
+                                exit /b 1
+                            )
+                        '''
+                    }
+                }
             }
         }
 
-        // 🚀 4️⃣ 애플리케이션 실행 (main 브랜치일 때만)
-        stage('Start') {
-            
-            // ✅ 실행 조건 설정
-            when {
-                anyOf {                    
-                    // 현재 브랜치가 "main"이거나
-                    branch 'main'
-                    
-                    // Git 브랜치 이름이 "origin/main"일 때만 stage 실행
-                    // Jenkins internally calls scm.branches and populates env.BRANCH_NAME automatically.
-                    expression { env.GIT_BRANCH == 'origin/main' }
-                }
-            }
-
+        stage('Run') {
             steps {
-                // npm start 명령 실행 (보통 서버 시작 또는 빌드 스크립트)
-                bat 'npm start'
+                script {
+                    if (isUnix()) {
+                        sh '''
+                            chmod +x main.sh
+                            ./main.sh
+                        '''
+                    } else {
+                        // Windows 환경에서는 main.bat을 실행합니다.
+                        bat 'main.bat'
+                    }
+                }
             }
         }
     }
 
-    // 📋 파이프라인 완료 후 실행할 후처리(post) 블록
     post {
-        // ✅ 모든 단계가 성공적으로 완료되었을 때 실행
         success {
-            echo 'Pipeline 성공적으로 완료!'
+            echo '성공'
         }
-
-        // ❌ 하나라도 실패했을 때 실행
         failure {
-            echo 'Pipeline 실패!'
+            echo '실패'
         }
     }
 }
